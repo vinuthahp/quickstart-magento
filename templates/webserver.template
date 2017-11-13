@@ -262,8 +262,7 @@ Resources:
           - sts:AssumeRole
       Path: /
       Policies:
-      - PolicyName: Instance-Limited-Role
-        PolicyDocument:
+      - PolicyDocument:
           Statement:
           - Effect: Allow
             Action:
@@ -274,8 +273,9 @@ Resources:
             Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${MagentoMainLogGroup}:*
           - Effect: Allow
             Action:
-            - s3:*
+            - s3:GetObject
             Resource: '*'
+        PolicyName: Instance-Limited-Role
   NewIamInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
