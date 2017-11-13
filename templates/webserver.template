@@ -51,10 +51,10 @@ Parameters:
     Description: ElastiCache Endpoint
     Type: String
   ElasticLoadBalancerSubnets:
-    ConstraintDescription: Must be list of existing Public subnet Ids
+    ConstraintDescription: Must be list of existing Public subnet IDs
     Default: ''
-    Description: A list of public subnet identifiers of Amazon VPCs where the ElasticLoadBalancer
-      would be launched.
+    Description: A list of public subnet identifiers of Amazon VPCs where the Elastic
+      Load Balancer would be launched.
     Type: List<AWS::EC2::Subnet::Id>
   KeyPair:
     ConstraintDescription: Must be the name of an existing EC2 KeyPair.
@@ -209,67 +209,44 @@ Conditions:
     - !Equals
       - !Ref NotificationEmail
       - ''
-  DontUseSSL:
-    !Equals
-    - !Ref SSLCertificateId
-    - ''
+  UseSSL:
+    !Not
+    - !Equals
+      - !Ref SSLCertificateId
+      - ''
   UseELBName:
     !Equals
     - !Ref DNSName
     - ''
 Resources:
-  NotificationTopic:
-    Type: AWS::SNS::Topic
+  FileSystem:
+    Type: AWS::EFS::FileSystem
     Properties:
-      Subscription:
-      - Endpoint: !Ref NotificationEmail
-        Protocol: email
-  WebServerScaleUpPolicy:
-    Type: AWS::AutoScaling::ScalingPolicy
+      PerformanceMode: generalPurpose
+      Encrypted: true
+      FileSystemTags:
+      - Key: Name
+        Value: EFS AWS Quick Start
+  MountTarget1:
+    Type: AWS::EFS::MountTarget
     Properties:
-      AdjustmentType: ChangeInCapacity
-      AutoScalingGroupName: !Ref WebServerAsg
-      Cooldown: '60'
-      ScalingAdjustment: '1'
-  WebServerScaleDownPolicy:
-    Type: AWS::AutoScaling::ScalingPolicy
+      FileSystemId: !Ref FileSystem
+      SubnetId:
+        !Select
+        - '0'
+        - !Ref WebServerSubnets
+      SecurityGroups:
+      - !Ref EFSSecurityGroup
+  MountTarget2:
+    Type: AWS::EFS::MountTarget
     Properties:
-      AdjustmentType: ChangeInCapacity
-      AutoScalingGroupName: !Ref WebServerAsg
-      Cooldown: '60'
-      ScalingAdjustment: '-1'
-  CPUAlarmHigh:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmDescription: Scale-up if CPU > 90% for 10 minutes
-      MetricName: CPUUtilization
-      Namespace: AWS/EC2
-      Statistic: Average
-      Period: '300'
-      EvaluationPeriods: '2'
-      Threshold: '90'
-      AlarmActions:
-      - !Ref WebServerScaleUpPolicy
-      Dimensions:
-      - Name: AutoScalingGroupName
-        Value: !Ref WebServerAsg
-      ComparisonOperator: GreaterThanThreshold
-  CPUAlarmLow:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmDescription: Scale-down if CPU < 70% for 10 minutes
-      MetricName: CPUUtilization
-      Namespace: AWS/EC2
-      Statistic: Average
-      Period: '300'
-      EvaluationPeriods: '2'
-      Threshold: '70'
-      AlarmActions:
-      - !Ref WebServerScaleDownPolicy
-      Dimensions:
-      - Name: AutoScalingGroupName
-        Value: !Ref WebServerAsg
-      ComparisonOperator: LessThanThreshold
+      FileSystemId: !Ref FileSystem
+      SubnetId:
+        !Select
+        - '1'
+        - !Ref WebServerSubnets
+      SecurityGroups:
+      - !Ref EFSSecurityGroup
   MagentoMainLogGroup:
     Type: AWS::Logs::LogGroup
   NewIamInstanceRole:
@@ -305,72 +282,6 @@ Resources:
       Path: /
       Roles:
       - !Ref NewIamInstanceRole
-  WebServerAsg:
-    Type: AWS::AutoScaling::AutoScalingGroup
-    Properties:
-      LaunchConfigurationName: !Ref WebServerLC
-      MinSize: !Ref WebServerMinSize
-      MaxSize: !Ref WebServerMaxSize
-      DesiredCapacity: !Ref WebServerDesiredCapacity
-      LoadBalancerNames:
-      - !Ref ElasticLoadBalancer
-      VPCZoneIdentifier: !Ref WebServerSubnets
-      NotificationConfiguration:
-        TopicARN: !Ref NotificationTopic
-        NotificationTypes:
-        - autoscaling:EC2_INSTANCE_LAUNCH
-        - autoscaling:EC2_INSTANCE_LAUNCH_ERROR
-        - autoscaling:EC2_INSTANCE_TERMINATE
-        - autoscaling:EC2_INSTANCE_TERMINATE_ERROR
-      Tags:
-      - Key: Name
-        Value: !Sub ${AWS::StackName}-Web Server
-        PropagateAtLaunch: 'true'
-  WebServerLC:
-    Type: AWS::AutoScaling::LaunchConfiguration
-    DependsOn: CreateAMI
-    Properties:
-      ImageId: !GetAtt CreateAMI.ami
-      InstanceType: !Ref WebServerInstanceType
-      SecurityGroups:
-      - !Ref WebServerSecurityGroup
-      IamInstanceProfile: !Ref NewIamInstanceProfile
-      KeyName: !Ref KeyPair
-      UserData:
-        !Base64
-          Fn::Sub: |
-            #cloud-config
-            runcmd:
-            - echo "${FileSystem}.efs.${AWS::Region}.amazonaws.com:/    /var/www/html/pub/media   nfs4    defaults" >> /etc/fstab
-            - mount -a
-  FileSystem:
-    Type: AWS::EFS::FileSystem
-    Properties:
-      PerformanceMode: generalPurpose
-      Encrypted: true
-      FileSystemTags:
-      - Key: Name
-        Value: EFS AWS Quick Start
-  MountTarget1:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref FileSystem
-      SubnetId:
-        !Select
-        - '0'
-        - !Ref WebServerSubnets
-      SecurityGroups:
-      - !Ref EFSSecurityGroup
-  MountTarget2:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref FileSystem
-      SubnetId:
-        !Select
-        - '1'
-        - !Ref WebServerSubnets
-      SecurityGroups:
-      - !Ref EFSSecurityGroup
   MagentoAMIWaitHandle:
     Type: AWS::CloudFormation::WaitConditionHandle
   MagentoAMIWaitCondition:
@@ -474,7 +385,7 @@ Resources:
                 - Param1:
                     !If
                     - UseELBName
-                    - !GetAtt ElasticLoadBalancer.DNSName
+                    - !GetAtt ApplicationLoadBalancer.DNSName
                     - !Ref DNSName
               mode: '000440'
               owner: root
@@ -623,63 +534,168 @@ Resources:
       ServiceToken: !GetAtt AMICleanUpFunction.Arn
       AMIId: !GetAtt CreateAMI.ami
       Version: 1
-  ElasticLoadBalancer:
-    Type: AWS::ElasticLoadBalancing::LoadBalancer
+  WebServerASG:
+    Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
+      LaunchConfigurationName: !Ref WebServerLC
+      MinSize: !Ref WebServerMinSize
+      MaxSize: !Ref WebServerMaxSize
+      DesiredCapacity: !Ref WebServerDesiredCapacity
+      TargetGroupARNs:
+      - !Ref ALBTargetGroup
+      VPCZoneIdentifier: !Ref WebServerSubnets
+      NotificationConfiguration:
+        TopicARN: !Ref NotificationTopic
+        NotificationTypes:
+        - autoscaling:EC2_INSTANCE_LAUNCH
+        - autoscaling:EC2_INSTANCE_LAUNCH_ERROR
+        - autoscaling:EC2_INSTANCE_TERMINATE
+        - autoscaling:EC2_INSTANCE_TERMINATE_ERROR
       Tags:
       - Key: Name
-        Value: ELBQuickStart
+        Value: !Sub ${AWS::StackName}-Web Server
+        PropagateAtLaunch: 'true'
+  WebServerLC:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    DependsOn: CreateAMI
+    Properties:
+      ImageId: !GetAtt CreateAMI.ami
+      InstanceType: !Ref WebServerInstanceType
+      SecurityGroups:
+      - !Ref WebServerSecurityGroup
+      IamInstanceProfile: !Ref NewIamInstanceProfile
+      KeyName: !Ref KeyPair
+      UserData:
+        !Base64
+          Fn::Sub: |
+            #cloud-config
+            runcmd:
+            - echo "${FileSystem}.efs.${AWS::Region}.amazonaws.com:/    /var/www/html/pub/media   nfs4    defaults" >> /etc/fstab
+            - mount -a
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+      - Endpoint: !Ref NotificationEmail
+        Protocol: email
+  WebServerScaleUpPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref WebServerASG
+      Cooldown: '60'
+      ScalingAdjustment: '1'
+  WebServerScaleDownPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref WebServerASG
+      Cooldown: '60'
+      ScalingAdjustment: '-1'
+  CPUAlarmHigh:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Scale-up if CPU > 90% for 10 minutes
+      MetricName: CPUUtilization
+      Namespace: AWS/EC2
+      Statistic: Average
+      Period: '300'
+      EvaluationPeriods: '2'
+      Threshold: '90'
+      AlarmActions:
+      - !Ref WebServerScaleUpPolicy
+      Dimensions:
+      - Name: AutoScalingGroupName
+        Value: !Ref WebServerASG
+      ComparisonOperator: GreaterThanThreshold
+  CPUAlarmLow:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Scale-down if CPU < 70% for 10 minutes
+      MetricName: CPUUtilization
+      Namespace: AWS/EC2
+      Statistic: Average
+      Period: '300'
+      EvaluationPeriods: '2'
+      Threshold: '70'
+      AlarmActions:
+      - !Ref WebServerScaleDownPolicy
+      Dimensions:
+      - Name: AutoScalingGroupName
+        Value: !Ref WebServerASG
+      ComparisonOperator: LessThanThreshold
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: application
+      Scheme: internet-facing
       Subnets: !Ref ElasticLoadBalancerSubnets
       SecurityGroups:
       - !Ref ELBSecurityGroup
-      CrossZone: 'true'
-      Listeners:
-      - LoadBalancerPort:
-          !If
-          - DontUseSSL
-          - '80'
-          - '443'
-        InstancePort:
-          !If
-          - DontUseSSL
-          - '80'
-          - '443'
-        Protocol:
-          !If
-          - DontUseSSL
-          - HTTP
-          - HTTPS
-        InstanceProtocol:
-          !If
-          - DontUseSSL
-          - HTTP
-          - HTTPS
-        SSLCertificateId:
-          !If
-          - DontUseSSL
-          - !Ref AWS::NoValue
-          - !Ref SSLCertificateId
-      HealthCheck:
-        Target:
-          !Sub
-          - ${Param1}:${Param2}/health
-          - Param2:
-              !If
-              - DontUseSSL
-              - '80'
-              - '443'
-            Param1:
-              !If
-              - DontUseSSL
-              - HTTP
-              - HTTPS
-        HealthyThreshold: '3'
-        UnhealthyThreshold: '5'
-        Interval: '30'
-        Timeout: '5'
-      ConnectionDrainingPolicy:
-        Enabled: 'true'
-        Timeout: '60'
+      Tags:
+      - Key: Name
+        Value: MagentoWebserverALB
+  ALBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /health
+      HealthCheckPort:
+        !If
+        - UseSSL
+        - 443
+        - 80
+      HealthCheckProtocol:
+        !If
+        - UseSSL
+        - HTTPS
+        - HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Port:
+        !If
+        - UseSSL
+        - 443
+        - 80
+      Protocol:
+        !If
+        - UseSSL
+        - HTTPS
+        - HTTP
+      UnhealthyThresholdCount: 5
+      VpcId:
+        Ref: VPCID
+      TargetGroupAttributes:
+      - Key: stickiness.enabled
+        Value: 'true'
+      - Key: stickiness.type
+        Value: lb_cookie
+      - Key: stickiness.lb_cookie.duration_seconds
+        Value: '30'
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn: !Ref ALBTargetGroup
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port:
+        !If
+        - UseSSL
+        - 443
+        - 80
+      Protocol:
+        !If
+        - UseSSL
+        - HTTPS
+        - HTTP
+  ALBListenerCertificate:
+    Condition: UseSSL
+    Type: AWS::ElasticLoadBalancingV2::ListenerCertificate
+    Properties:
+      Certificates:
+      - CertificateArn: !Ref SSLCertificateId
+      ListenerArn: !Ref ALBListener
 Outputs:
   URL:
     Description: The URL of the website
@@ -689,17 +705,17 @@ Outputs:
       - Param2:
           !If
           - UseELBName
-          - !GetAtt ElasticLoadBalancer.DNSName
+          - !GetAtt ApplicationLoadBalancer.DNSName
           - !Ref DNSName
         Param1:
           !If
-          - DontUseSSL
-          - http
+          - UseSSL
           - https
+          - http
   ELBURL:
     Description: The URL of the ELB, you should create a CNAME or alias to this name
       if you specified a DNS name
-    Value: !GetAtt ElasticLoadBalancer.DNSName
+    Value: !GetAtt ApplicationLoadBalancer.DNSName
   AdminURL:
     Description: Admin path
     Value:
