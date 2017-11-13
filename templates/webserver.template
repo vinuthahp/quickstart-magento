@@ -309,12 +309,12 @@ Resources:
               awslogs: []
           files:
             /etc/awslogs/awslogs.conf:
-              content: |
+              content: !Sub |
                 [general]
                 state_file= /var/log/agent-state
                 [/home/ec2-user/misc/install]
                 file = /var/log/cloud-init-output.log
-                log_group_name = magento_install
+                log_group_name = ${MagentoMainLogGroup}
                 log_stream_name = {instance_id}/magento/install.log
               mode: '000400'
               owner: root
@@ -454,17 +454,13 @@ Resources:
           Statement:
           - Effect: Allow
             Action:
-            - logs:CreateLogGroup
-            - logs:CreateLogStream
-            - logs:PutLogEvents
-            Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${MagentoMainLogGroup}:*
-          - Effect: Allow
-            Action:
             - ec2:Describe*
             - ec2:StopInstances
             - ec2:CreateImage
             - ec2:DeregisterImage
             Resource: '*'
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
   AMIInfoFunction:
     Type: AWS::Lambda::Function
     Properties:
