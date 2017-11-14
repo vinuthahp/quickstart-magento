@@ -204,11 +204,6 @@ Mappings:
     us-west-2:
       AMZNLINUXHVM: ami-32d8124a
 Conditions:
-  AllowNotificationEmail:
-    !Not
-    - !Equals
-      - !Ref NotificationEmail
-      - ''
   UseSSL:
     !Not
     - !Equals
@@ -530,6 +525,12 @@ Resources:
       ServiceToken: !GetAtt AMICleanUpFunction.Arn
       AMIId: !GetAtt CreateAMI.ami
       Version: 1
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+      - Endpoint: !Ref NotificationEmail
+        Protocol: email
   WebServerASG:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
@@ -568,58 +569,16 @@ Resources:
             runcmd:
             - echo "${FileSystem}.efs.${AWS::Region}.amazonaws.com:/    /var/www/html/pub/media   nfs4    defaults" >> /etc/fstab
             - mount -a
-  NotificationTopic:
-    Type: AWS::SNS::Topic
-    Properties:
-      Subscription:
-      - Endpoint: !Ref NotificationEmail
-        Protocol: email
-  WebServerScaleUpPolicy:
+  WebServerTargetTrackingScalingPolicy:
     Type: AWS::AutoScaling::ScalingPolicy
     Properties:
-      AdjustmentType: ChangeInCapacity
       AutoScalingGroupName: !Ref WebServerASG
       Cooldown: '60'
-      ScalingAdjustment: '1'
-  WebServerScaleDownPolicy:
-    Type: AWS::AutoScaling::ScalingPolicy
-    Properties:
-      AdjustmentType: ChangeInCapacity
-      AutoScalingGroupName: !Ref WebServerASG
-      Cooldown: '60'
-      ScalingAdjustment: '-1'
-  CPUAlarmHigh:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmDescription: Scale-up if CPU > 90% for 10 minutes
-      MetricName: CPUUtilization
-      Namespace: AWS/EC2
-      Statistic: Average
-      Period: '300'
-      EvaluationPeriods: '2'
-      Threshold: '90'
-      AlarmActions:
-      - !Ref WebServerScaleUpPolicy
-      Dimensions:
-      - Name: AutoScalingGroupName
-        Value: !Ref WebServerASG
-      ComparisonOperator: GreaterThanThreshold
-  CPUAlarmLow:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmDescription: Scale-down if CPU < 70% for 10 minutes
-      MetricName: CPUUtilization
-      Namespace: AWS/EC2
-      Statistic: Average
-      Period: '300'
-      EvaluationPeriods: '2'
-      Threshold: '70'
-      AlarmActions:
-      - !Ref WebServerScaleDownPolicy
-      Dimensions:
-      - Name: AutoScalingGroupName
-        Value: !Ref WebServerASG
-      ComparisonOperator: LessThanThreshold
+      PolicyType: TargetTrackingScaling
+      TargetTrackingConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ASGAverageCPUUtilization
+        TargetValue: 80.0
   ApplicationLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
