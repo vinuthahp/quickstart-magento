@@ -630,6 +630,11 @@ Resources:
   ALBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
+      Certificates:
+      - !If
+        - UseSSL
+        - CertificateArn: !Ref SSLCertificateId
+        - !Ref AWS::NoValue
       DefaultActions:
       - Type: forward
         TargetGroupArn: !Ref ALBTargetGroup
@@ -644,13 +649,6 @@ Resources:
         - UseSSL
         - HTTPS
         - HTTP
-  ALBListenerCertificate:
-    Condition: UseSSL
-    Type: AWS::ElasticLoadBalancingV2::ListenerCertificate
-    Properties:
-      Certificates:
-      - CertificateArn: !Ref SSLCertificateId
-      ListenerArn: !Ref ALBListener
 Outputs:
   URL:
     Description: The URL of the website
