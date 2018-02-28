@@ -8,10 +8,8 @@ Parameters:
     Description: 'The CIDR IP range that is permitted to access. Note: a value of
       0.0.0.0/0 will allow access from ANY ip address'
     Type: String
-  VPC:
-    AllowedPattern: vpc-[0-9a-z]{8}
-    Default: vpc-xxxxxxxx
-    Description: VPC-ID of your existing Virtual Private Cloud (VPC) where you want
+  VPCID:
+    Description: VPC ID of your existing Virtual Private Cloud (VPC) where you want
       to depoy RDS.
     Type: AWS::EC2::VPC::Id
   VPCCIDR:
@@ -24,7 +22,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Allow access to MySQL Port (AWS Quick Start)
-      VpcId: !Ref VPC
+      VpcId: !Ref VPCID
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: '3306'
@@ -43,7 +41,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: ELB Security Group (AWS Quick Start)
-      VpcId: !Ref VPC
+      VpcId: !Ref VPCID
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: '80'
@@ -66,7 +64,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: App Server Security Group (AWS Quick Start)
-      VpcId: !Ref VPC
+      VpcId: !Ref VPCID
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: '22'
@@ -93,7 +91,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Database Security Group (AWS Quick Start)
-      VpcId: !Ref VPC
+      VpcId: !Ref VPCID
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: '2049'
@@ -112,7 +110,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Database Security Group (AWS Quick Start)
-      VpcId: !Ref VPC
+      VpcId: !Ref VPCID
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: '6379'

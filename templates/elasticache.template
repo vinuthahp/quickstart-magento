@@ -49,12 +49,6 @@ Parameters:
     Description: Atleast two existing Subnets in separate Availability Zones your
       Virtual Private Cloud (VPC)
     Type: List<AWS::EC2::Subnet::Id>
-  VPC:
-    AllowedPattern: vpc-[0-9a-z]{8}
-    Default: vpc-xxxxxxxx
-    Description: VPC-ID of your existing Virtual Private Cloud (VPC) where you want
-      to deploy ElastiCache cluster.
-    Type: AWS::EC2::VPC::Id
 Resources:
   ElastiCacheSubnetGroup:
     Type: AWS::ElastiCache::SubnetGroup

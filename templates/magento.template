@@ -518,7 +518,7 @@ Resources:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/securitygroups.template
       Parameters:
         AccessCIDR: !Ref AccessCIDR
-        VPC: !Ref VPCID
+        VPCID: !Ref VPCID
         VPCCIDR: !Ref VPCCIDR
   RDSStack:
     Type: AWS::CloudFormation::Stack
@@ -532,7 +532,6 @@ Resources:
             - rdsaurora.template
             - rdsmysql.template
       Parameters:
-        VPC: !Ref VPCID
         RDSSecurityGroup: !GetAtt SecurityGroupStack.Outputs.MySQLRDSSecurityGroup
         Subnets: !Sub ${PrivateSubnet1ID},${PrivateSubnet2ID}
         DBAllocatedStorage: !Ref DBAllocatedStorage
@@ -550,7 +549,6 @@ Resources:
     Properties:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/elasticache.template
       Parameters:
-        VPC: !Ref VPCID
         ElastiCacheSecurityGroup: !GetAtt SecurityGroupStack.Outputs.ElastiCacheSecurityGroup
         Subnets: !Sub ${PrivateSubnet1ID},${PrivateSubnet2ID}
         ElastiCacheNodes: !Ref ElastiCacheNodes
