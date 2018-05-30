@@ -192,7 +192,7 @@ server {
             location ~* \.(ico|jpg|jpeg|png|gif|svg|js|css|swf|eot|ttf|otf|woff|woff2)$ {
                 add_header Cache-Control "public";
                 add_header X-Frame-Options "SAMEORIGIN";
-                expires +1y;
+                expires 1y;
 
                 if (!-f $request_filename) {
                     rewrite ^/static/(version\d*/)?(.*)$ /static.php?resource=$2 last;
@@ -223,7 +223,7 @@ server {
             location ~* \.(ico|jpg|jpeg|png|gif|svg|js|css|swf|eot|ttf|otf|woff|woff2)$ {
                 add_header Cache-Control "public";
                 add_header X-Frame-Options "SAMEORIGIN";
-                expires +1y;
+                expires 1y;
                 try_files $uri $uri/ /get.php?$args;
             }
             location ~* \.(zip|gz|gzip|bz2|csv|xml)$ {
@@ -363,7 +363,7 @@ server {
             location ~* \.(ico|jpg|jpeg|png|gif|svg|js|css|swf|eot|ttf|otf|woff|woff2)$ {
                 add_header Cache-Control "public";
                 add_header X-Frame-Options "SAMEORIGIN";
-                expires +1y;
+                expires 1y;
 
                 if (!-f $request_filename) {
                     rewrite ^/static/(version\d*/)?(.*)$ /static.php?resource=$2 last;
@@ -394,7 +394,7 @@ server {
             location ~* \.(ico|jpg|jpeg|png|gif|svg|js|css|swf|eot|ttf|otf|woff|woff2)$ {
                 add_header Cache-Control "public";
                 add_header X-Frame-Options "SAMEORIGIN";
-                expires +1y;
+                expires 1y;
                 try_files $uri $uri/ /get.php?$args;
             }
             location ~* \.(zip|gz|gzip|bz2|csv|xml)$ {
