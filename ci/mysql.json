@@ -21,7 +21,7 @@
   },
   {
     "ParameterKey": "MagentoReleaseMedia",
-    "ParameterValue": "https://s3.amazonaws.com/$[alfred_getmediabucket]/magento/Magento-CE-2.1.9_sample_data-2017-09-13-03-57-21.tar.gz"
+    "ParameterValue": "https://s3.amazonaws.com/$[alfred_getmediabucket]/magento/Magento-CE-2.1.13-2018-05-01-07-19-03.tar.gz"
   },
   {
     "ParameterKey": "DBMasterUserPassword",
