@@ -21,6 +21,10 @@ Parameters:
   AdminUserName:
     Description: Username of the Magento site administrator
     Type: String
+  AmazonLinuxAMI:
+    Default: /aws/service/ami-amazon-linux-latest/amzn-ami-hvm-x86_64-gp2
+    Description: SSM parameter pointing to the desired Amazon Linux AMI
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
   DBMasterUserPassword:
     AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
     Description: RDS MySQL Database Password
@@ -169,38 +173,6 @@ Parameters:
     Description: A list of subnet identifiers of Amazon VPCs where the WebServer Autoscaling
       would be launched.
     Type: List<AWS::EC2::Subnet::Id>
-Mappings:
-  AWSAMIRegionMap:
-    AMI:
-      AMZNLINUXHVM: amzn-ami-hvm-2018.03.0.20181129-x86_64-gp2
-    ap-northeast-1:
-      AMZNLINUXHVM: ami-00a5245b4816c38e6
-    ap-northeast-2:
-      AMZNLINUXHVM: ami-00dc207f8ba6dc919
-    ap-south-1:
-      AMZNLINUXHVM: ami-0ad42f4f66f6c1cc9
-    ap-southeast-1:
-      AMZNLINUXHVM: ami-05b3bcf7f311194b3
-    ap-southeast-2:
-      AMZNLINUXHVM: ami-02fd0b06f06d93dfc
-    ca-central-1:
-      AMZNLINUXHVM: ami-07423fb63ea0a0930
-    eu-central-1:
-      AMZNLINUXHVM: ami-0cfbf4f6db41068ac
-    eu-west-1:
-      AMZNLINUXHVM: ami-08935252a36e25f85
-    eu-west-2:
-      AMZNLINUXHVM: ami-01419b804382064e4
-    sa-east-1:
-      AMZNLINUXHVM: ami-05145e0b28ad8e0b2
-    us-east-1:
-      AMZNLINUXHVM: ami-0080e4c5bc078760e
-    us-east-2:
-      AMZNLINUXHVM: ami-0cd3dfa4e37921605
-    us-west-1:
-      AMZNLINUXHVM: ami-0ec6517f6edbf8044
-    us-west-2:
-      AMZNLINUXHVM: ami-01e24be29428c15b2
 Conditions:
   UseSSL:
     !Not
@@ -402,11 +374,7 @@ Resources:
     Properties:
       KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref NewIamInstanceProfile
-      ImageId:
-        !FindInMap
-        - AWSAMIRegionMap
-        - !Ref AWS::Region
-        - AMZNLINUXHVM
+      ImageId: !Ref AmazonLinuxAMI
       InstanceType: !Ref WebServerInstanceType
       SubnetId:
         !Select
@@ -459,7 +427,7 @@ Resources:
     Properties:
       Handler: index.lambda_handler
       Runtime: python2.7
-      Timeout: '300'
+      Timeout: 300
       Role: !GetAtt AMIInfoFunctionExecutionRole.Arn
       Code:
         ZipFile: |
@@ -488,7 +456,7 @@ Resources:
     Properties:
       Handler: index.lambda_handler
       Runtime: python2.7
-      Timeout: '300'
+      Timeout: 300
       Role: !GetAtt AMIInfoFunctionExecutionRole.Arn
       Code:
         ZipFile: |
@@ -539,8 +507,8 @@ Resources:
       TargetGroupARNs:
       - !Ref ALBTargetGroup
       VPCZoneIdentifier: !Ref WebServerSubnets
-      NotificationConfiguration:
-        TopicARN: !Ref NotificationTopic
+      NotificationConfigurations:
+      - TopicARN: !Ref NotificationTopic
         NotificationTypes:
         - autoscaling:EC2_INSTANCE_LAUNCH
         - autoscaling:EC2_INSTANCE_LAUNCH_ERROR
@@ -549,10 +517,9 @@ Resources:
       Tags:
       - Key: Name
         Value: !Sub ${AWS::StackName}-Web Server
-        PropagateAtLaunch: 'true'
+        PropagateAtLaunch: true
   WebServerLC:
     Type: AWS::AutoScaling::LaunchConfiguration
-    DependsOn: CreateAMI
     Properties:
       ImageId: !GetAtt CreateAMI.ami
       InstanceType: !Ref WebServerInstanceType
@@ -596,8 +563,8 @@ Resources:
       HealthCheckPort:
         !If
         - UseSSL
-        - 443
-        - 80
+        - '443'
+        - '80'
       HealthCheckProtocol:
         !If
         - UseSSL
