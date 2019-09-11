@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ $# -ne 16 ]; then
-    echo $0: usage: install_magento.sh dbhost dbuser dbpassword dbname cname adminfirstname adminlastname adminemail adminuser adminpassword cachehost magentourl protocol magentolanguage magentocurrency magentotimezone
+if [ $# -ne 15 ]; then
+    echo $0: usage: configure_magento.sh dbhost dbuser dbpassword dbname cname adminfirstname adminlastname adminemail adminuser adminpassword cachehost protocol magentolanguage magentocurrency magentotimezone
     exit 1
 fi
 
@@ -18,11 +18,10 @@ adminemail=$8
 adminuser=$9
 adminpassword=${10}
 cachehost=${11}
-magentourl=${12}
-protocol=${13}
-magentolanguage=${14}
-magentocurrency=${15}
-magentotimezone=${16}
+protocol=${12}
+magentolanguage=${13}
+magentocurrency=${14}
+magentotimezone=${15}
 
 cd
 #curl -o magento.tar.gz $magentourl
@@ -35,7 +34,7 @@ cd
 [ -f "magento.tar.gz" ] && echo "Media file Found" || echo "Media file Not found"
 
 cd /var/www/html
-tar xzf ~/magento.tar.gz
+tar xzf /home/ec2-user/magento.tar.gz
 
 find var vendor pub/static pub/media app/etc -type f -exec chmod g+w {} \;
 find var vendor pub/static pub/media app/etc -type d -exec chmod g+ws {} \;
@@ -163,7 +162,9 @@ $init_value
   array (
     'date' => 'Tue, 19 Jul 2016 15:44:17 +0000',
   ),
-);
+]
+]
+;
 EOF
 
 mysql -h $dbhost -u $dbuser $dbname -p$dbpassword << EOF
@@ -179,7 +180,15 @@ EOF
 
 fi
 
-./magento deploy:mode:set production
+# ./magento deploy:mode:set production
+# deploy:mode has been deprecated in 2.3
+
+cd /var/www/html/bin
+./magento setup:install --base-url=$protocol://$cname/ \
+--db-host=$dbhost --db-name=$dbname --db-user=$dbuser --db-password=$dbpassword \
+--admin-firstname=$adminfirst --admin-lastname=$adminlast --admin-email=$adminemail \
+--admin-user=$adminuser --admin-password=$adminpassword --language=$magentolanguage \
+--currency=$magentocurrency --timezone=$magentotimezone $secure
 
 ./magento info:adminuri > /home/ec2-user/adminuri
 

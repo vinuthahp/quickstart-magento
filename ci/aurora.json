@@ -16,12 +16,12 @@
     "ParameterValue": "10.0.0.0/16"
   },
   {
-    "ParameterKey": "NotificationEmail",
-    "ParameterValue": "foo@example.com"
+    "ParameterKey": "MagentoReleaseMedia",
+    "ParameterValue": "https://s3.amazonaws.com/$[taskcat_getmediabucket]/magento/Magento-CE-2.3.2_sample_data-2019-06-13-04-34-43.tar.gz"
   },
   {
-    "ParameterKey": "MagentoReleaseMedia",
-    "ParameterValue": "https://s3.amazonaws.com/$[taskcat_getmediabucket]/magento/Magento-CE-2.1.13-2018-05-01-07-19-03.tar.gz"
+    "ParameterKey": "NotificationEmail",
+    "ParameterValue": "foo@example.com"
   },
   {
     "ParameterKey": "DBMasterUserPassword",
@@ -50,5 +50,9 @@
   {
     "ParameterKey": "QSS3BucketName",
     "ParameterValue": "$[taskcat_autobucket]"
+  },
+  {
+    "ParameterKey": "QSS3KeyPrefix",
+    "ParameterValue": "quickstart-magento/"
   }
 ]
