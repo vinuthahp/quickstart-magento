@@ -16,6 +16,7 @@ function exportParams() {
     cachehost=`grep 'ElastiCacheEndpoint' ${PARAMS_FILE} | awk -F'|' '{print $2}' | sed -e 's/^ *//g;s/ *$//g'`
     efsid=`grep 'FileSystem' ${PARAMS_FILE} | awk -F'|' '{print $2}' | sed -e 's/^ *//g;s/ *$//g'`
     magentourl=`grep 'MagentoReleaseMedia' ${PARAMS_FILE} | awk -F'|' '{print $2}' | sed -e 's/^ *//g;s/ *$//g'`
+    magentoversion=`grep 'MagentoVersion' ${PARAMS_FILE} | awk -F'|' '{print $2}' | sed -e 's/^ *//g;s/ *$//g'`
     certificateid=`grep 'SSLCertificateId' ${PARAMS_FILE} | awk -F'|' '{print $2}' | sed -e 's/^ *//g;s/ *$//g'`
     magentolanguage=`grep 'MagentoLanguage' ${PARAMS_FILE} | awk -F'|' '{print $2}' | sed -e 's/^ *//g;s/ *$//g'`
     magentocurrency=`grep 'MagentoCurrency' ${PARAMS_FILE} | awk -F'|' '{print $2}' | sed -e 's/^ *//g;s/ *$//g'`
@@ -42,12 +43,13 @@ adminpassword='NONE'
 cachehost='NONE'
 efsid='NONE'
 magentourl='NONE'
+magentoversion='NONE'
 certificateid='NONE'
 magentolanguage='NONE'
 magentocurrency='NONE'
 magentotimezone='NONE'
 
-#install_magento.sh dbhost dbuser dbpassword dbname cname adminfirstname adminlastname adminemail adminuser adminpassword cachehost efsid magentourl certificateid magentolanguage magentocurrency magentotimezone
+#install_magento.sh dbhost dbuser dbpassword dbname cname adminfirstname adminlastname adminemail adminuser adminpassword cachehost efsid magentourl magentoversion certificateid magentolanguage magentocurrency magentotimezone
 
 if [ -f ${PARAMS_FILE} ]; then
     echo "Extracting parameter values from params file"
@@ -601,7 +603,7 @@ then
         protocol="http"
 fi
 
-sudo -u ec2-user /tmp/configure_magento.sh $dbhost $dbuser $dbpassword $dbname $cname $adminfirst $adminlast $adminemail $adminuser $adminpassword $cachehost $protocol $magentolanguage $magentocurrency $magentotimezone
+sudo -u ec2-user /tmp/configure_magento.sh $dbhost $dbuser $dbpassword $dbname $cname $adminfirst $adminlast $adminemail $adminuser $adminpassword $cachehost $protocol $magentolanguage $magentocurrency $magentotimezone $magentoversion
 
 tar czf /root/media.tgz -C /var/www/html/pub/media .
 mount -t nfs4 -o vers=4.1 $efsid.efs.$EC2_REGION.amazonaws.com:/ /var/www/html/pub/media

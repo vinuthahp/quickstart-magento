@@ -79,6 +79,10 @@ Parameters:
     Default: ''
     Description: Amazon S3 path to download magento .tar.gz file (https://s3.amazonaws.com/mybucket/Magento-CE-2.3.2_sample_data-2019-06-13-04-34-43.tar.gz)
     Type: String
+  MagentoVersion:
+    Default: '2.3'
+    Description: Magento Version (2.1 or 2.3)
+    Type: String
   MySQLEndPointAddress:
     Default: ''
     Description: RDS MySQL Endpoint
@@ -343,6 +347,7 @@ Resources:
                   ElastiCacheEndpoint|${ElastiCacheEndpoint}
                   FileSystem|${FileSystem}
                   MagentoReleaseMedia|${MagentoReleaseMedia}
+                  MagentoVersion|${MagentoVersion}
                   SSLCertificateId|${SSLCertificateId}
                   MagentoLanguage|${MagentoLanguage}
                   MagentoCurrency|${MagentoCurrency}

@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Deploy Magento 2.3.2 on AWS. QS(0013)
+Description: Deploy Magento 2.1 or 2.3 on AWS. QS(0013)
 Metadata:
   LICENSE: Apache License Version 2.0
   AWS::CloudFormation::Interface:
@@ -57,6 +57,7 @@ Metadata:
       - MagentoLanguage
       - MagentoTimezone
       - MagentoReleaseMedia
+      - MagentoVersion
       - SSLCertificateId
     - Label:
         default: AWS Quick Start Configuration
@@ -116,6 +117,8 @@ Metadata:
         default: Magento timezone
       MagentoReleaseMedia:
         default: S3 file path to download Magento
+      MagentoVersion:
+        default: Magento Version (2.1 or 2.3)
       NotificationEmail:
         default: Email address to notify
       PrivateSubnet1ID:
@@ -353,6 +356,10 @@ Parameters:
     Default: ''
     Description: Amazon S3 path to download magento .tar.gz file (https://s3.amazonaws.com/mybucket/Magento-CE-2.3.2-2019-06-13-03-23-52.tar.gz)
     Type: String
+  MagentoVersion:
+    Default: '2.3'
+    Description: Magento Version (2.1 or 2.3)
+    Type: String
   MagentoTimezone:
     Default: America/Los_Angeles
     Description: The time zone setting that specifies the primary market served by
@@ -571,6 +578,7 @@ Resources:
         MagentoLanguage: !Ref MagentoLanguage
         MagentoTimezone: !Ref MagentoTimezone
         MagentoReleaseMedia: !Ref MagentoReleaseMedia
+        MagentoVersion: !Ref MagentoVersion
         DBMasterUserPassword: !Ref DBMasterUserPassword
         DBMasterUsername: !Ref DBMasterUsername
         DBName: !Ref DBName

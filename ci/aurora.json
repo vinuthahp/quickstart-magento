@@ -17,7 +17,11 @@
   },
   {
     "ParameterKey": "MagentoReleaseMedia",
-    "ParameterValue": "https://s3.amazonaws.com/$[taskcat_getmediabucket]/magento/Magento-CE-2.3.2_sample_data-2019-06-13-04-34-43.tar.gz"
+    "ParameterValue": "https://aws-quickstart-ci-media-a4771463-7c08-48e1-a354-da7500ee5ba2.s3.amazonaws.com/magento/Magento-CE-2.3.2_sample_data-2019-06-13-04-34-43.tar.gz"
+  },
+  {
+    "ParameterKey": "MagentoVersion",
+    "ParameterValue": "2.3"
   },
   {
     "ParameterKey": "NotificationEmail",

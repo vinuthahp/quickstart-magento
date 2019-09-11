@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ $# -ne 15 ]; then
-    echo $0: usage: configure_magento.sh dbhost dbuser dbpassword dbname cname adminfirstname adminlastname adminemail adminuser adminpassword cachehost protocol magentolanguage magentocurrency magentotimezone
+if [ $# -ne 16 ]; then
+    echo $0: usage: configure_magento.sh dbhost dbuser dbpassword dbname cname adminfirstname adminlastname adminemail adminuser adminpassword cachehost protocol magentolanguage magentocurrency magentotimezone magentoversion
     exit 1
 fi
 
@@ -22,6 +22,7 @@ protocol=${12}
 magentolanguage=${13}
 magentocurrency=${14}
 magentotimezone=${15}
+magentoversion=${16}
 
 cd
 #curl -o magento.tar.gz $magentourl
@@ -180,15 +181,20 @@ EOF
 
 fi
 
-# ./magento deploy:mode:set production
-# deploy:mode has been deprecated in 2.3
-
+if [ "$magentoversion" = "2.1" ]
+then
+   ./magento deploy:mode:set production
+else
 cd /var/www/html/bin
 ./magento setup:install --base-url=$protocol://$cname/ \
 --db-host=$dbhost --db-name=$dbname --db-user=$dbuser --db-password=$dbpassword \
 --admin-firstname=$adminfirst --admin-lastname=$adminlast --admin-email=$adminemail \
 --admin-user=$adminuser --admin-password=$adminpassword --language=$magentolanguage \
 --currency=$magentocurrency --timezone=$magentotimezone $secure
+
+fi
+
+
 
 ./magento info:adminuri > /home/ec2-user/adminuri
 
