@@ -354,7 +354,7 @@ Parameters:
     Type: String
   MagentoReleaseMedia:
     Default: ''
-    Description: Amazon S3 path to download magento .tar.gz file (https://s3.amazonaws.com/mybucket/Magento-CE-2.3.2-2019-06-13-03-23-52.tar.gz)
+    Description: Amazon S3 path to download magento .tar.gz file (https://s3-<region>.amazonaws.com/mybucket/Magento-CE-2.3.2-2019-06-13-03-23-52.tar.gz)
     Type: String
   MagentoVersion:
     Default: '2.3'
