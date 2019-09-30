@@ -1,0 +1,83 @@
+<?php
+ 
+use Aws\Common\Aws;
+ 
+const AWS_ACCESS_KEY = 'your-aws-access-key';
+const AWS_SECRET_KEY = 'your-secret-key';
+const AWS_REGION     = 'your-region';
+const S3_BUCKET      = 'your-s3-bucket-to-store-s3-archives'; // I recommend the Elastic Beanstalk S3 bucket
+const EB_APPLICATION_NAME = 'your-eb-name';
+ 
+ob_start();
+ 
+// Composer autoloading
+if (file_exists('vendor/autoload.php')) {
+    $loader = include 'vendor/autoload.php';
+}
+ 
+$environments = [
+    'master' => ['environment1', 'environment2'],
+    'develop' => ['environment1-test', 'environment2-test']
+];
+ 
+$gitHash = exec('git log -1 --format="%H"');
+$branch  = exec('git rev-parse --abbrev-ref HEAD');
+ 
+exec('git log -1 --format="%B"', $commitMessage);
+$commitMessage = reset($commitMessage);
+ 
+if (!isset($environments[$branch])) {
+    echo 'No environments are bound to the branch ' . $branch . PHP_EOL;
+    die();
+}
+ 
+echo sprintf(
+    "\nBranch '%s' is going to be deployed to following environments: %s. Do you want to confirm? [y/N]\n",
+    $branch,
+    implode(', ', $environments[$branch])
+);
+ 
+flush();
+ob_flush();
+ 
+if (trim(fgets(STDIN)) !== 'y') {
+    die();
+}
+ 
+echo "\nCreating the archive... This may take some minutes!\n";
+ 
+$archiveFileName = $gitHash . '.zip';
+ 
+// Create the archive in the current branch
+exec('vendor/bin/zfdeploy.php build ' . $archiveFileName . ' --composer=on --gitignore=on');
+ 
+$aws = Aws::factory([
+    'key'    => AWS_ACCESS_KEY,
+    'secret' => AWS_SECRET_KEY,
+    'region' => AWS_REGION
+]);
+ 
+/** @var \Aws\S3\S3Client $s3 */
+$s3 = $aws->get('S3');
+$s3->upload(S3_BUCKET, 'git-' . $gitHash . '.zip', file_get_contents($archiveFileName));
+ 
+/** @var \Aws\ElasticBeanstalk\ElasticBeanstalkClient $elasticBeanstalkClient */
+$elasticBeanstalkClient = $aws->get('ElasticBeanstalk');
+$elasticBeanstalkClient->createApplicationVersion([
+    'ApplicationName' => EB_APPLICATION_NAME,
+    'Description'     => $commitMessage,
+    'VersionLabel'    => substr('git-' . $gitHash, 0, 11),
+    'SourceBundle'    => [
+        'S3Bucket' => S3_BUCKET,
+        'S3Key'    => 'git-' . $gitHash . '.zip'
+    ]
+]);
+ 
+foreach ($environments[$branch] as $environment) {
+    $elasticBeanstalkClient->updateEnvironment([
+        'EnvironmentName' => $environment,
+        'VersionLabel'    => substr('git-' . $gitHash, 0, 11)
+    ]);
+}
+ 
+unlink($archiveFileName);
