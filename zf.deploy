@@ -2,11 +2,11 @@
  
 use Aws\Common\Aws;
  
-const AWS_ACCESS_KEY = 'your-aws-access-key';
-const AWS_SECRET_KEY = 'your-secret-key';
-const AWS_REGION     = 'your-region';
-const S3_BUCKET      = 'your-s3-bucket-to-store-s3-archives'; // I recommend the Elastic Beanstalk S3 bucket
-const EB_APPLICATION_NAME = 'your-eb-name';
+const AWS_ACCESS_KEY = 'AKIAXQ3TPWER5H4NQP25';
+const AWS_SECRET_KEY = 'RnECAig6eQvsiD7VJgqPdGcotR+Wnl+p7o826tXb';
+const AWS_REGION     = 'ap-south-1';
+const S3_BUCKET      = 'codepipeline-ap-south-1-978438012661'; // I recommend the Elastic Beanstalk S3 bucket
+const EB_APPLICATION_NAME = 'mag';
  
 ob_start();
  
